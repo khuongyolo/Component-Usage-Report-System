@@ -1021,7 +1021,7 @@ function doPost(e) {
 
 // Alternative method using Google Apps Script Web App
 async function writeToGoogleSheetsWithScript(reportData) {
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBqptJD9ba_m5Of1JSJcMlYaIQfaOolfjqWxRCY1tZuknbhsBxfaVBs2MiSuxpUNKo/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7SgfzV4MKsOk2WL6BzVZEwVzcmZDuwNgnViAZby9mRjXZv8rXht1QaSIQBe1Mj5-MuA/exec';
     
     try {
         const submissionTime = formatDateTimeForSheet(new Date());

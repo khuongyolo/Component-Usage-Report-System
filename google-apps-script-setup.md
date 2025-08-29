@@ -11,12 +11,16 @@
    - Cột B: Tên linh kiện
    - Cột C: Số lượng còn lại
 
-3. **Sheet "Nhật ký"**: Nơi lưu báo cáo (sẽ được tự động tạo dữ liệu)
+3. **Sheet "Nhật ký"**: Nơi lưu báo cáo sử dụng linh kiện (sẽ được tự động tạo dữ liệu)
    - Cột A: Thời gian gửi
    - Cột B: Họ và tên
    - Cột C: Ngày thực hiện
    - Cột D: Linh kiện đã sử dụng
    - Cột E: Mục đích
+
+4. **Sheet "Nhật ký cập nhật"**: Nơi lưu báo cáo cập nhật kho (sẽ được tự động tạo)
+   - Cột A: Thời gian gửi
+   - Cột B: Linh kiện đã bổ sung
 
 ## Bước 1: Tạo Google Apps Script Project
 
@@ -29,11 +33,12 @@
 Trước khi copy code, hãy cập nhật các constants sau cho phù hợp với Google Sheets của bạn:
 
 ```javascript
-const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID';    // ID của Google Sheets
-const LOG_SHEET_NAME = 'Nhật ký';           // Tên sheet lưu báo cáo
-const COMPONENT_SHEET_NAME = 'Linh kiện';    // Tên sheet chứa linh kiện
-const COMPONENT_NAME_COLUMN = 2;             // Cột chứa tên linh kiện (B = 2)
-const COMPONENT_STOCK_COLUMN = 3;            // Cột chứa số lượng (C = 3)
+const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID';        // ID của Google Sheets
+const LOG_SHEET_NAME = 'Nhật ký';               // Tên sheet lưu báo cáo sử dụng
+const STOCK_UPDATE_SHEET_NAME = 'Nhật ký cập nhật'; // Tên sheet lưu báo cáo cập nhật kho
+const COMPONENT_SHEET_NAME = 'Linh kiện';        // Tên sheet chứa linh kiện
+const COMPONENT_NAME_COLUMN = 2;                 // Cột chứa tên linh kiện (B = 2)
+const COMPONENT_STOCK_COLUMN = 3;                // Cột chứa số lượng (C = 3)
 ```
 
 **Cách lấy SHEET_ID:**
@@ -49,10 +54,11 @@ Thay thế code mặc định bằng đoạn code sau:
 // === CẤU HÌNH CHUNG ===
 // Thay đổi các giá trị này để phù hợp với Google Sheets của bạn
 const SHEET_ID = '1NGHViIVB_LYaJs5GqZ6XQ5xv3eNkex3ZjEmVn13ztNI';
-const LOG_SHEET_NAME = 'Nhật ký';          // Tên sheet lưu báo cáo
-const COMPONENT_SHEET_NAME = 'Linh kiện';   // Tên sheet chứa danh sách linh kiện
-const COMPONENT_NAME_COLUMN = 2;            // Cột B (tên linh kiện) - index bắt đầu từ 1
-const COMPONENT_STOCK_COLUMN = 3;           // Cột C (số lượng còn lại) - index bắt đầu từ 1
+const LOG_SHEET_NAME = 'Nhật ký';              // Tên sheet lưu báo cáo sử dụng
+const STOCK_UPDATE_SHEET_NAME = 'Nhật ký cập nhật'; // Tên sheet lưu báo cáo cập nhật kho  
+const COMPONENT_SHEET_NAME = 'Linh kiện';       // Tên sheet chứa danh sách linh kiện
+const COMPONENT_NAME_COLUMN = 2;                // Cột B (tên linh kiện) - index bắt đầu từ 1
+const COMPONENT_STOCK_COLUMN = 3;               // Cột C (số lượng còn lại) - index bắt đầu từ 1
 
 function doGet(e) {
   try {
@@ -60,39 +66,14 @@ function doGet(e) {
     const params = e.parameter;
     
     if (params.action === 'addRow') {
-      // Mở Google Sheets
-      const logSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(LOG_SHEET_NAME);
-      const componentSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(COMPONENT_SHEET_NAME);
-      
-      // Ghi dữ liệu vào Nhật ký
-      const lastRow = logSheet.getLastRow();
-      const nextRow = lastRow + 1;
-      
-      const rowData = [
-        params.col1, // Thời gian gửi
-        params.col2, // Nhân viên  
-        params.col3, // Ngày thực hiện
-        params.col4, // Linh kiện
-        params.col5  // Mục đích
-      ];
-      
-      logSheet.getRange(nextRow, 1, 1, rowData.length).setValues([rowData]);
-      
-      // Cập nhật số lượng trong sheet Linh kiện
-      const componentText = params.col4; // Chuỗi linh kiện
-      const updatedComponents = updateComponentStock(componentSheet, componentText);
-      
-      // Trả về kết quả thành công
-      return ContentService.createTextOutput(JSON.stringify({
-        success: true,
-        row: nextRow,
-        data: rowData,
-        updatedComponents: updatedComponents,
-        message: 'Dữ liệu đã được ghi thành công và số lượng đã được cập nhật'
-      })).setMimeType(ContentService.MimeType.JSON);
+      // Xử lý báo cáo sử dụng linh kiện (trang chính)
+      return handleUsageReport(params);
+    } else if (params.action === 'addStockUpdate') {
+      // Xử lý cập nhật kho (trang update-stock)
+      return handleStockUpdate(params);
     } else {
       // Test response
-      return ContentService.createTextOutput('Google Apps Script is running! Use action=addRow with col1-col5 parameters.')
+      return ContentService.createTextOutput('Google Apps Script is running! Use action=addRow or action=addStockUpdate with parameters.')
         .setMimeType(ContentService.MimeType.TEXT);
     }
     
@@ -106,20 +87,113 @@ function doGet(e) {
   }
 }
 
-function updateComponentStock(componentSheet, componentText) {
+// Xử lý báo cáo sử dụng linh kiện (action: addRow)
+function handleUsageReport(params) {
+  // Mở Google Sheets
+  const logSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(LOG_SHEET_NAME);
+  const componentSheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(COMPONENT_SHEET_NAME);
+  
+  // Ghi dữ liệu vào Nhật ký
+  const lastRow = logSheet.getLastRow();
+  const nextRow = lastRow + 1;
+  
+  const rowData = [
+    params.col1, // Thời gian gửi
+    params.col2, // Nhân viên  
+    params.col3, // Ngày thực hiện
+    params.col4, // Linh kiện
+    params.col5  // Mục đích
+  ];
+  
+  logSheet.getRange(nextRow, 1, 1, rowData.length).setValues([rowData]);
+  
+  // Cập nhật số lượng trong sheet Linh kiện (TRỪ đi)
+  const componentText = params.col4; // Chuỗi linh kiện
+  const updatedComponents = updateComponentStock(componentSheet, componentText, 'subtract');
+  
+  // Trả về kết quả thành công
+  return ContentService.createTextOutput(JSON.stringify({
+    success: true,
+    row: nextRow,
+    data: rowData,
+    updatedComponents: updatedComponents,
+    message: 'Dữ liệu đã được ghi thành công và số lượng đã được cập nhật'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Xử lý cập nhật kho (action: addStockUpdate)
+function handleStockUpdate(params) {
+  // Mở Google Sheets
+  const spreadsheet = SpreadsheetApp.openById(SHEET_ID);
+  let stockUpdateSheet = spreadsheet.getSheetByName(STOCK_UPDATE_SHEET_NAME);
+  
+  // Tạo sheet "Nhật ký cập nhật" nếu chưa có
+  if (!stockUpdateSheet) {
+    stockUpdateSheet = spreadsheet.insertSheet(STOCK_UPDATE_SHEET_NAME);
+    
+    // Thêm header cho sheet mới
+    stockUpdateSheet.getRange(1, 1, 1, 2).setValues([
+      ['Thời gian', 'Linh kiện']
+    ]);
+    
+    // Format header
+    const headerRange = stockUpdateSheet.getRange(1, 1, 1, 2);
+    headerRange.setBackground('#4285f4');
+    headerRange.setFontColor('#ffffff');
+    headerRange.setFontWeight('bold');
+    
+    console.log('Created new sheet: ' + STOCK_UPDATE_SHEET_NAME);
+  }
+  
+  const componentSheet = spreadsheet.getSheetByName(COMPONENT_SHEET_NAME);
+  
+  // Ghi dữ liệu vào Nhật ký cập nhật
+  const lastRow = stockUpdateSheet.getLastRow();
+  const nextRow = lastRow + 1;
+  
+  const rowData = [
+    params.col1, // Thời gian gửi
+    params.col2  // Linh kiện được bổ sung
+  ];
+  
+  stockUpdateSheet.getRange(nextRow, 1, 1, rowData.length).setValues([rowData]);
+  
+  // Cập nhật số lượng trong sheet Linh kiện (CỘNG thêm)
+  const componentText = params.col2; // Chuỗi linh kiện
+  const updatedComponents = updateComponentStock(componentSheet, componentText, 'add');
+  
+  // Trả về kết quả thành công
+  return ContentService.createTextOutput(JSON.stringify({
+    success: true,
+    row: nextRow,
+    data: rowData,
+    updatedComponents: updatedComponents,
+    message: 'Cập nhật kho thành công và số lượng đã được cập nhật'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function updateComponentStock(componentSheet, componentText, operation = 'subtract') {
   const updatedComponents = [];
   
   try {
     // Parse component text để lấy danh sách linh kiện và số lượng
-    // Format: "A\n-Tua vít (2)\n-Búa (1)\nB\n-Cưa (1)"
+    // Format cho subtract: "A\n-Tua vít (2)\n-Búa (1)\nB\n-Cưa (1)"
+    // Format cho add: "A\n-Tua vít (+2)\n-Búa (+1)\nB\n-Cưa (+1)"
     const lines = componentText.split('\n');
     const componentsToUpdate = [];
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (line.startsWith('-')) {
-        // Đây là dòng linh kiện: "-Tua vít (2)"
-        const match = line.match(/^-(.+?)\s*\((\d+)\)$/);
+        let match;
+        if (operation === 'add') {
+          // Parse format "-Tua vít (+2)" cho add operation
+          match = line.match(/^-(.+?)\s*\(\+(\d+)\)$/);
+        } else {
+          // Parse format "-Tua vít (2)" cho subtract operation
+          match = line.match(/^-(.+?)\s*\((\d+)\)$/);
+        }
+        
         if (match) {
           const componentName = match[1].trim();
           const quantity = parseInt(match[2]);
@@ -142,18 +216,32 @@ function updateComponentStock(componentSheet, componentText) {
         const currentStock = parseInt(values[row][COMPONENT_STOCK_COLUMN - 1]) || 0; // Cột C (index 2)
         
         if (componentName === name) {
-          // Cập nhật số lượng: trừ đi số lượng đã sử dụng
-          const newStock = Math.max(0, currentStock - quantity);
+          let newStock;
+          if (operation === 'add') {
+            // Cộng thêm số lượng cho cập nhật kho
+            newStock = currentStock + quantity;
+          } else {
+            // Trừ đi số lượng đã sử dụng
+            newStock = Math.max(0, currentStock - quantity);
+          }
+          
           componentSheet.getRange(row + 1, COMPONENT_STOCK_COLUMN).setValue(newStock);
           
-          updatedComponents.push({
+          const updateInfo = {
             name: name,
             oldStock: currentStock,
-            usedQuantity: quantity,
             newStock: newStock
-          });
+          };
           
-          console.log(`Updated ${name}: ${currentStock} -> ${newStock} (used: ${quantity})`);
+          if (operation === 'add') {
+            updateInfo.addedQuantity = quantity;
+            console.log(`Added ${name}: ${currentStock} -> ${newStock} (added: ${quantity})`);
+          } else {
+            updateInfo.usedQuantity = quantity;
+            console.log(`Updated ${name}: ${currentStock} -> ${newStock} (used: ${quantity})`);
+          }
+          
+          updatedComponents.push(updateInfo);
           break;
         }
       }
@@ -182,9 +270,9 @@ function doPost(e) {
     const rowData = data.rowData;
     logSheet.getRange(nextRow, 1, 1, rowData.length).setValues([rowData]);
     
-    // Cập nhật số lượng trong sheet Linh kiện
+    // Cập nhật số lượng trong sheet Linh kiện (TRỪ đi - operation mặc định)
     const componentText = rowData[3]; // Cột 4 - linh kiện
-    const updatedComponents = updateComponentStock(componentSheet, componentText);
+    const updatedComponents = updateComponentStock(componentSheet, componentText, 'subtract');
     
     // Trả về kết quả thành công
     return ContentService.createTextOutput(JSON.stringify({
@@ -235,12 +323,12 @@ const SCRIPT_URL = 'YOUR_COPIED_WEB_APP_URL_HERE';
 ### Test Google Apps Script trực tiếp:
 1. Mở URL sau trong browser để test:
 ```
-https://script.google.com/macros/s/AKfycbxVPyMNJeSbE7xfU4rfteVStWuKaGXqHvPd2-MIzuk27u-H0N-OaR1eIHsI3YxZDM3r/exec
+https://script.google.com/macros/s/AKfycbx7SgfzV4MKsOk2WL6BzVZEwVzcmZDuwNgnViAZby9mRjXZv8rXht1QaSIQBe1Mj5-MuA/exec
 ```
 
 2. Test với dữ liệu mẫu:
 ```
-https://script.google.com/macros/s/AKfycbxVPyMNJeSbE7xfU4rfteVStWuKaGXqHvPd2-MIzuk27u-H0N-OaR1eIHsI3YxZDM3r/exec?action=addRow&col1=29/08/2025%2014:30&col2=Test%20User&col3=29/08/2025&col4=Test%20Component&col5=Test%20Purpose
+https://script.google.com/macros/s/AKfycbx7SgfzV4MKsOk2WL6BzVZEwVzcmZDuwNgnViAZby9mRjXZv8rXht1QaSIQBe1Mj5-MuA/exec?action=addRow&col1=29/08/2025%2014:30&col2=Test%20User&col3=29/08/2025&col4=Test%20Component&col5=Test%20Purpose
 ```
 
 ### Debug Google Apps Script:

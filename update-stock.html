@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cập nhật số lượng linh kiện</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Cập nhật số lượng linh kiện</h1>
+                    <p>Thêm linh kiện vào kho</p>
+                </div>
+            </div>
+        </header>
+
+        <form id="stockUpdateForm" class="form-container">
+            <!-- Step 1: Component Selection -->
+            <div class="form-step active" id="componentGroup">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-info">
+                        <h3>Thêm linh kiện</h3>
+                        <p>Chọn linh kiện và số lượng cần thêm vào kho</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="loading" id="componentLoading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <span>Đang tải linh kiện...</span>
+                    </div>
+
+                    <!-- Container cho danh sách nhóm linh kiện dạng accordion -->
+                    <div id="componentAccordion" class="component-accordion" style="display: none;">
+                        <!-- Danh sách nhóm sẽ được tạo động -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <span class="btn-icon">📦</span>
+                    <span>Cập nhật kho</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="update-stock.js"></script>
+</body>
+</html>

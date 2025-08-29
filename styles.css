@@ -541,7 +541,9 @@ body {
 /* Buttons */
 .form-actions {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
     padding-top: var(--spacing-xl);
     margin-top: var(--spacing-2xl);
     border-top: 1px solid var(--border-color);
@@ -563,9 +565,30 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+.btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: var(--surface-color);
+    color: var(--secondary-color);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary:hover {
+    border-color: var(--secondary-color);
+    background: var(--background-color);
 }
 
 .btn-primary:active {
