@@ -297,9 +297,11 @@ function createComponentGroup(groupName, groupComponents) {
     
     header.innerHTML = `
         <div class="group-title">
-            <span class="group-icon">📦</span>
-            <span>${groupName}</span>
-            <span class="group-info">(${groupComponents.length} linh kiện)</span>
+            <div class="group-main">
+                <span class="group-icon">📦</span>
+                <span class="group-name">${groupName}</span>
+            </div>
+            <div class="group-info">(${groupComponents.length} linh kiện)</div>
         </div>
         <span class="expand-icon">⌄</span>
     `;
@@ -530,17 +532,22 @@ function createComponentItem(componentName, groupName, index) {
     const stockClass = isOutOfStock ? 'out-of-stock' : 'in-stock';
 
     itemDiv.innerHTML = `
-        <div class="component-info">
-            <input type="checkbox" 
-                   id="${checkboxId}" 
-                   class="component-checkbox" 
-                   value="${componentName}"
-                   ${isOutOfStock ? 'disabled' : ''}
-                   onchange="handleComponentCheck(this, '${componentName}', '${quantityId}')">
-            <label for="${checkboxId}" class="component-name ${isOutOfStock ? 'disabled' : ''}">
-                ${componentName} <span class="stock-info ${stockClass}">(${stockDisplay})</span>
-            </label>
-        </div>
+        <label for="${checkboxId}" class="component-info-label ${isOutOfStock ? 'disabled' : ''}">
+            <div class="component-info">
+                <div class="component-main">
+                    <input type="checkbox" 
+                           id="${checkboxId}" 
+                           class="component-checkbox" 
+                           value="${componentName}"
+                           ${isOutOfStock ? 'disabled' : ''}
+                           onchange="handleComponentCheck(this, '${componentName}', '${quantityId}')">
+                    <span class="component-name ${isOutOfStock ? 'disabled' : ''}">
+                        ${componentName}
+                    </span>
+                </div>
+                <div class="stock-info ${stockClass}">${stockDisplay}</div>
+            </div>
+        </label>
         <input type="number" 
                id="${quantityId}" 
                class="quantity-input" 
