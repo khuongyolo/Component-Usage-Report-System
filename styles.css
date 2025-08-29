@@ -366,17 +366,18 @@ body {
     transition: all 0.2s ease;
 }
 
+.component-item.selected {
+    background: rgba(37, 99, 235, 0.05);
+    border-color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
 .component-item:last-child {
     border-bottom: none;
 }
 
 .component-item:hover {
     background: var(--background-color);
-}
-
-.component-item.selected {
-    background: rgba(37, 99, 235, 0.05);
-    border-color: var(--primary-color);
 }
 
 .component-info-label {
@@ -456,6 +457,7 @@ body {
     font-size: 0.95rem;
     text-align: center;
     flex-shrink: 0;
+    margin-bottom: var(--spacing-md);
 }
 
 /* Purpose Options */
