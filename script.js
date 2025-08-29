@@ -88,16 +88,8 @@ function setupEventListeners() {
         validatePurposeSelection();
     });
 
-    // Implementation date validation and formatting
-    implementationDate.addEventListener('input', function() {
-        formatDateInput(this);
-    });
-    
+    // Implementation date validation
     implementationDate.addEventListener('change', function() {
-        validateDateSelection();
-    });
-    
-    implementationDate.addEventListener('blur', function() {
         validateDateSelection();
     });
 }
@@ -415,11 +407,10 @@ function showDateGroup() {
     dateGroup.style.display = 'block';
     dateGroup.classList.add('active');
     
-    // Set default date to today in dd/mm/yyyy format
+    // Set default date to today
     if (!implementationDate.value) {
-        const today = new Date();
-        const formattedToday = formatDateForDisplay(today);
-        implementationDate.value = formattedToday;
+        const today = new Date().toISOString().split('T')[0];
+        implementationDate.value = today;
         validateDateSelection();
     }
 }
@@ -508,40 +499,12 @@ function validateDateSelection() {
         return false;
     }
     
-    // Validate date format (dd/mm/yyyy)
-    const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-    const match = selectedDate.match(datePattern);
-    
-    if (!match) {
-        implementationDate.classList.add('error');
-        implementationDate.classList.remove('success');
-        return false;
-    }
-    
-    const day = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10);
-    const year = parseInt(match[3], 10);
-    
-    // Check if date values are valid
-    if (month < 1 || month > 12 || day < 1 || day > 31) {
-        implementationDate.classList.add('error');
-        implementationDate.classList.remove('success');
-        return false;
-    }
-    
-    // Create date object to check validity
-    const dateObj = new Date(year, month - 1, day);
-    if (dateObj.getDate() !== day || dateObj.getMonth() !== month - 1 || dateObj.getFullYear() !== year) {
-        implementationDate.classList.add('error');
-        implementationDate.classList.remove('success');
-        return false;
-    }
-    
     // Check if date is not in the future (more than today)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    const today = new Date().toISOString().split('T')[0];
+    const selected = new Date(selectedDate);
+    const todayDate = new Date(today);
     
-    if (dateObj > today) {
+    if (selected > todayDate) {
         implementationDate.classList.add('error');
         implementationDate.classList.remove('success');
         return false;
@@ -970,35 +933,7 @@ function formatDateTimeForSheet(date) {
     return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
-function formatDateForDisplay(date) {
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    
-    return `${day}/${month}/${year}`;
-}
-
-function formatDateInput(input) {
-    let value = input.value.replace(/\D/g, ''); // Remove non-digits
-    
-    if (value.length >= 2) {
-        value = value.substring(0, 2) + '/' + value.substring(2);
-    }
-    if (value.length >= 5) {
-        value = value.substring(0, 5) + '/' + value.substring(5, 9);
-    }
-    
-    input.value = value;
-}
-
 function formatDateForSheet(dateString) {
-    // If dateString is already in dd/mm/yyyy format, return as is
-    if (typeof dateString === 'string' && dateString.includes('/')) {
-        return dateString;
-    }
-    
-    // Otherwise, convert from Date object or ISO string
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
