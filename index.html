@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sử dụng linh kiện</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>Quản lý sử dụng linh kiện</h1>
+                </div>
+            </div>
+        </header>
+
+        <form id="componentReportForm" class="form-container">
+            <!-- Step 1: Employee Selection -->
+            <div class="form-step active" id="step1">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-info">
+                        <h3>Họ và tên</h3>
+                        <p>Tên của bạn</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="employeeName" class="form-label">
+                        <span class="label-icon">👤</span>
+                        <span class="label-text">Tên</span>
+                        <span class="required">*</span>
+                    </label>
+                    <select id="employeeName" name="employeeName" required class="form-select">
+                        <option value="">Chọn tên của bạn...</option>
+                        <!-- Danh sách nhân viên sẽ được load từ Google Sheets -->
+                    </select>
+                    <div class="loading" id="employeeLoading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <span>Đang tải nhân viên...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Component Selection -->
+            <div class="form-step" id="componentGroup" style="display: none;">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-info">
+                        <h3>Chọn linh kiện</h3>
+                        <p>Linh kiện cần dùng</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="loading" id="componentLoading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <span>Đang tải linh kiện...</span>
+                    </div>
+
+                    <!-- Container cho danh sách nhóm linh kiện dạng accordion -->
+                    <div id="componentAccordion" class="component-accordion" style="display: none;">
+                        <!-- Danh sách nhóm sẽ được tạo động -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Purpose Selection -->
+            <div class="form-step" id="purposeGroup" style="display: none;">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-info">
+                        <h3>Mục đích</h3>
+                        <p>Dùng ở đâu?</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="purpose-options">
+                        <label class="radio-option">
+                            <input type="radio" name="purpose" value="company" id="purposeCompany" required>
+                            <div class="radio-content">
+                                <div class="radio-icon">🏢</div>
+                                <div class="radio-text">
+                                    <div class="radio-title">Dùng trong công ty</div>
+                                    <div class="radio-desc">Sử dụng nội bộ</div>
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="purpose" value="external" id="purposeExternal" required>
+                            <div class="radio-content">
+                                <div class="radio-icon">🌍</div>
+                                <div class="radio-text">
+                                    <div class="radio-title">Dùng bên ngoài</div>
+                                    <div class="radio-desc">Sử dụng cho bên ngoài</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Ô nhập thông tin chi tiết khi chọn "sử dụng ở ngoài" -->
+                    <div id="externalPurposeDetails" class="external-details" style="display: none;">
+                        <label for="externalDescription" class="form-label">
+                            <span class="label-icon">📍</span>
+                            <span class="label-text">Công ty/Địa chỉ</span>
+                            <span class="required">*</span>
+                        </label>
+                        <textarea id="externalDescription" 
+                                 name="externalDescription" 
+                                 placeholder="Nhập tên công ty hoặc địa chỉ sử dụng..."
+                                 rows="2"
+                                 class="form-textarea"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Date Selection -->
+            <div class="form-step" id="dateGroup" style="display: none;">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div class="step-info">
+                        <h3>Ngày dùng</h3>
+                        <p>Ngày sử dụng</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="implementationDate" class="form-label">
+                        <span class="label-icon">📅</span>
+                        <span class="label-text">Ngày</span>
+                        <span class="required">*</span>
+                    </label>
+                    <input type="date" 
+                           id="implementationDate" 
+                           name="implementationDate"
+                           class="form-input"
+                           required>
+                    <div class="input-helper">
+                        <small>Chọn ngày dùng linh kiện</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <span class="btn-icon">📤</span>
+                    <span>Gửi</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
